@@ -1,0 +1,35 @@
+---
+- name: Create VM with cloud-init using virt-install
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Copy base image for VM
+      copy:
+        src: ../images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2
+        dest: /home/amw/Office/DevOps/Practice_VMs/AnsibleOneVM.qcow2
+        remote_src: yes
+
+    - name: Copy seed ISO
+      copy:
+        src: ../images/AnsibleOneVMSeed.iso
+        dest: /home/amw/Office/DevOps/Practice_VMs/AnsibleOneVMSeed.iso
+        remote_src: yes
+
+    - name: Create VM using virt-install
+      command: >
+        virt-install
+        --name=AnsibleOneVM
+        --memory=3072
+        --vcpus=1
+        --disk path=/home/amw/Office/DevOps/Practice_VMs/AnsibleOneVM.qcow2,format=qcow2
+        --disk path=/home/amw/Office/DevOps/linux-automation-infrastructure-Prjct_02/images/AnsibleOneVMSeed.iso,device=cdrom
+        --os-type=linux
+        --os-variant=almalinux9
+        --virt-type=kvm
+        --graphics none
+        --network network=default
+        --import
+        --noautoconsole
+      args:
+        creates: /home/amw/Office/DevOps/linux-automation-infrastructure-Prjct_02/AnsibleOneVMxml.xml
+

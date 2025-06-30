@@ -1,0 +1,16 @@
+#cloud-config
+users:
+  - name: AnsibleOneUser
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILVyHrcW9ySRkkBKlC21RCD0tphAAy9rBDBbssGemkR8 amw@ST313
+
+package_update: true
+packages:
+  - vim
+  - curl
+  - git
+  - wget
+  - net-tools
