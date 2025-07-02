@@ -1,0 +1,4 @@
+nginx_enabled: true
+firewalld_enabled: true
+http_port: 8080
+

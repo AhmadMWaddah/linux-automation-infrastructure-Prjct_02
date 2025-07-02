@@ -1,0 +1,4 @@
+project_stage: testing
+timezone: Africa/Cairo
+custom_message: "This is the web server"
+port: 2222

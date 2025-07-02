@@ -1,0 +1,3 @@
+ansible_user: ServOneUser
+custom_var_for_vm: "app server base config"
+
