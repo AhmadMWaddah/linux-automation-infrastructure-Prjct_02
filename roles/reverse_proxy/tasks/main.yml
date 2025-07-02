@@ -1,0 +1,32 @@
+---
+- name: Install NGINX
+  dnf:
+    name: nginx
+    state: present
+
+- name: Copy custom NGINX config
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+  notify: Restart nginx
+
+- name: Start and enable NGINX
+  systemd:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Allow HTTP traffic through firewall
+  firewalld:
+    service: http
+    permanent: true
+    state: enabled
+    immediate: true
+
+- name: Open HTTP port in firewall
+  become: true
+  firewalld:
+    service: http
+    permanent: true
+    state: enabled
+    immediate: true
