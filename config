@@ -1,0 +1,69 @@
+Host AnsibleOneVM
+	HostName 192.168.122.192
+	User AnsibleOneUser
+	IdentityFile /home/amw/Office/DevOps/Practice_VMs/Key_Pairs/AnsibleOneVM/AnsibleOneVM_Key_ed25519
+	IdentitiesOnly yes
+
+Host WebServVM
+	HostName 192.168.122.210
+	User ServOneUser
+	IdentityFile /home/amw/Office/DevOps/Practice_VMs/Key_Pairs/WebServVMKeys/WebServVM_Key_ed25519
+	IdentitiesOnly yes
+	Port 2222
+
+Host WebServVM_Deployer
+	HostName 192.168.122.210
+	User web-deployer
+	IdentityFile /home/amw/Office/DevOps/Practice_VMs/Key_Pairs/WebServVMKeys/WebServVM_Key_ed25519
+	IdentitiesOnly yes
+	Port 2222
+
+Host WebServVM_Auditor
+	HostName 192.168.122.210
+	User web-auditor
+	IdentityFile /home/amw/Office/DevOps/Practice_VMs/Key_Pairs/WebServVMKeys/WebServVM_Key_ed25519
+	IdentitiesOnly yes
+	Port 2222
+
+Host DataBaseServVM
+	HostName 192.168.122.220
+	User ServTwoUser
+	IdentityFile /home/amw/Office/DevOps/Practice_VMs/Key_Pairs/DataBaseServVMKeys/DataBaseServVM_Key_ed25519
+	IdentitiesOnly yes
+	Port 2222
+
+Host DataBaseServVM_Backup
+	HostName 192.168.122.220
+	User db-backup
+	IdentityFile /home/amw/Office/DevOps/Practice_VMs/Key_Pairs/DataBaseServVMKeys/DataBaseServVM_Key_ed25519
+	IdentitiesOnly yes
+	Port 2222
+
+Host DataBaseServVM_Auditor
+	HostName 192.168.122.220
+	User db-auditor
+	IdentityFile /home/amw/Office/DevOps/Practice_VMs/Key_Pairs/DataBaseServVMKeys/DataBaseServVM_Key_ed25519
+	IdentitiesOnly yes
+	Port 2222
+
+Host AppServVM
+	HostName 192.168.122.230
+	User ServThreeUser
+	IdentityFile /home/amw/Office/DevOps/Practice_VMs/Key_Pairs/AppServVMKeys/AppServVM_Key_ed25519
+	IdentitiesOnly yes
+	Port 2222
+
+Host AppServVM_DevOps
+	HostName 192.168.122.230
+	User app-devops
+	IdentityFile /home/amw/Office/DevOps/Practice_VMs/Key_Pairs/AppServVMKeys/AppServVM_Key_ed25519
+	IdentitiesOnly yes
+	Port 2222
+
+Host AppServVM_Auditor
+	HostName 192.168.122.230
+	User app-auditor
+	IdentityFile /home/amw/Office/DevOps/Practice_VMs/Key_Pairs/AppServVMKeys/AppServVM_Key_ed25519
+	IdentitiesOnly yes
+	Port 2222
+
