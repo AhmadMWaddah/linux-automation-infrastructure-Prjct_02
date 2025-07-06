@@ -1,0 +1,7 @@
+---
+- name: Harden PostgreSQL configuration on DataBaseServVM
+  hosts: DataBaseServVM
+  become: true
+  roles:
+    - db_hardening
+

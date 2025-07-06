@@ -1,0 +1,46 @@
+---
+- name: Ensure PostgreSQL is installed
+  dnf:
+    name: postgresql-server
+    state: present
+  become: true
+
+- name: Initialize PostgreSQL
+  command: /usr/bin/postgresql-setup --initdb
+  args:
+    creates: /var/lib/pgsql/data/PG_VERSION
+  become: true
+
+- name: Ensure PostgreSQL is enabled and started
+  systemd:
+    name: postgresql
+    enabled: true
+    state: started
+  become: true
+
+- name: Harden pg_hba.conf to local access only
+  template:
+    src: pg_hba.conf.j2
+    dest: /var/lib/pgsql/data/pg_hba.conf
+    owner: postgres
+    group: postgres
+    mode: '0600'
+  become: true
+  notify: Restart PostgreSQL
+
+- name: Enable logging in postgresql.conf
+  lineinfile:
+    path: /var/lib/pgsql/data/postgresql.conf
+    regexp: '^#?(log_destination|logging_collector|log_directory|log_filename|log_statement|log_min_duration_statement)'
+    line: "{{ item }}"
+    state: present
+  loop:
+    - "log_destination = 'stderr'"
+    - "logging_collector = on"
+    - "log_directory = 'log'"
+    - "log_filename = 'postgresql-%a.log'"
+    - "log_statement = 'all'"
+    - "log_min_duration_statement = 500"
+  become: true
+  notify: Restart PostgreSQL
+
