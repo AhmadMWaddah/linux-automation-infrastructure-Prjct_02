@@ -1,0 +1,84 @@
+---
+- name: Install dependencies
+  dnf:
+    name:
+      - dnf-utils
+      - device-mapper-persistent-data
+      - lvm2
+    state: present
+  become: true
+
+- name: Add Docker repo
+  get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+  become: true
+
+- name: Install Docker
+  dnf:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    state: present
+  become: true
+
+- name: Ensure docker group exists
+  group:
+    name: docker
+    state: present
+  become: true
+
+- name: Add user to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+  become: true
+
+- name: Enable and start Docker
+  systemd:
+    name: docker
+    enabled: true
+    state: started
+  become: true
+
+- name: Wait for Docker socket to be available
+  wait_for:
+    path: /var/run/docker.sock
+    state: present
+    timeout: 30
+  become: true
+
+- name: Install pip3
+  dnf:
+    name: python3-pip
+    state: present
+  become: true
+
+- name: Install Python Docker SDK
+  pip:
+    name: docker
+    state: present
+  become: true
+
+- name: Pull nginx image
+  community.docker.docker_image:
+    name: nginx
+    source: pull
+  become: true
+  environment:
+    DOCKER_HOST: unix:///var/run/docker.sock
+
+- name: Run nginx container
+  community.docker.docker_container:
+    name: nginx
+    image: nginx
+    state: started
+    restart_policy: always
+    published_ports:
+      - "80:80"
+  become: true
+  environment:
+    DOCKER_HOST: unix:///var/run/docker.sock
+

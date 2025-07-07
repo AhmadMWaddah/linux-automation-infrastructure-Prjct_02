@@ -1,0 +1,8 @@
+---
+- name: Set up Docker and deploy NGINX container
+  hosts: AppServVM
+  become: true
+  gather_facts: true
+  roles:
+    - docker_setup
+
