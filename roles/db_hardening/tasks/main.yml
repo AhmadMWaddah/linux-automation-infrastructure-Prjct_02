@@ -44,3 +44,10 @@
   become: true
   notify: Restart PostgreSQL
 
+- name: Create PostgreSQL user with secure password
+  become: true
+  postgresql_user:
+    name: app_user
+    password: "{{ db_password }}"
+    state: present
+
