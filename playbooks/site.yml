@@ -1,0 +1,19 @@
+---
+- name: Configure AppServVM
+  hosts: AppServVM
+  become: true
+  roles:
+    - docker_setup
+
+- name: Configure WebServVM
+  hosts: WebServVM
+  become: true
+  roles:
+    - reverse_proxy
+
+- name: Configure DataBaseServVM
+  hosts: DataBaseServVM
+  become: true
+  roles:
+    - db_hardening
+
