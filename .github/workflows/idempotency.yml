@@ -1,0 +1,39 @@
+name: Ansible Idempotency Test
+
+on:
+  push:
+    paths:
+      - '**/*.yml'
+      - '**/roles/**'
+  pull_request:
+    paths:
+      - '**/*.yml'
+      - '**/roles/**'
+
+jobs:
+  idempotency:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible
+
+      - name: First Ansible Run
+        run: |
+          ansible-playbook playbooks/site.yml -i inventories/hosts.ini
+
+      - name: Second Ansible Run (Check for Changes)
+        run: |
+          ansible-playbook playbooks/site.yml -i inventories/hosts.ini | tee second_run_output.txt
+          grep -q "changed=0.*failed=0" second_run_output.txt
+
