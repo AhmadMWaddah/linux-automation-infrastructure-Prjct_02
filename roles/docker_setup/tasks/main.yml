@@ -1,84 +1,95 @@
 ---
-- name: Install dependencies
+- name: Install system dependencies
+  become: true
   dnf:
     name:
-      - dnf-utils
+      - yum-utils
       - device-mapper-persistent-data
       - lvm2
     state: present
-  become: true
+    update_cache: yes
 
-- name: Add Docker repo
-  get_url:
-    url: https://download.docker.com/linux/centos/docker-ce.repo
-    dest: /etc/yum.repos.d/docker-ce.repo
+- name: Add Docker CE repository
   become: true
+  command: >
+    dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+  args:
+    creates: /etc/yum.repos.d/docker-ce.repo
 
-- name: Install Docker
+- name: Install Docker packages
+  become: true
   dnf:
     name:
       - docker-ce
       - docker-ce-cli
       - containerd.io
     state: present
-  become: true
+    update_cache: yes
 
-- name: Ensure docker group exists
+- name: Configure Docker service
+  become: true
+  systemd:
+    name: docker.service
+    enabled: yes
+    state: started
+
+- name: Create docker group
+  become: true
   group:
     name: docker
     state: present
-  become: true
 
 - name: Add user to docker group
+  become: true
   user:
-    name: "{{ ansible_user }}"
+    name: "{{ docker_user }}"
     groups: docker
     append: yes
-  become: true
 
-- name: Enable and start Docker
-  systemd:
-    name: docker
-    enabled: true
-    state: started
+- name: Refresh group membership without hanging
   become: true
+  command: sg docker -c "exit"
+  changed_when: false
 
-- name: Wait for Docker socket to be available
-  wait_for:
-    path: /var/run/docker.sock
-    state: present
-    timeout: 30
+- name: Verify Docker access
   become: true
+  command: docker ps
+  register: docker_access_check
+  changed_when: false
+  retries: 3
+  delay: 5
+  until: docker_access_check.rc == 0
 
-- name: Install pip3
-  dnf:
-    name: python3-pip
-    state: present
+- name: Pull NGINX image
   become: true
+  command: docker pull nginx:latest
+  retries: 3
+  delay: 5
 
-- name: Install Python Docker SDK
-  pip:
-    name: docker
-    state: present
+- name: Ensure no conflicting container exists
   become: true
+  command: docker rm -f nginx
+  ignore_errors: yes
+  changed_when: false
 
-- name: Pull nginx image
-  community.docker.docker_image:
-    name: nginx
-    source: pull
+- name: Deploy NGINX container
   become: true
-  environment:
-    DOCKER_HOST: unix:///var/run/docker.sock
+  command: >
+    docker run -d --name nginx
+    -p {{ docker_container_port }}:80
+    --restart unless-stopped
+    nginx:latest
+  register: container_deploy
+  retries: 2
+  delay: 3
 
-- name: Run nginx container
-  community.docker.docker_container:
-    name: nginx
-    image: nginx
-    state: started
-    restart_policy: always
-    published_ports:
-      - "80:80"
+# Fixed container status verification - escaping Docker template syntax
+- name: Verify container status
   become: true
-  environment:
-    DOCKER_HOST: unix:///var/run/docker.sock
-
+  shell: |
+    docker inspect -f '{{ "{{" }}.State.Status{{ "}}" }}' nginx | grep -q running
+  register: container_status
+  until: container_status.rc == 0
+  retries: 5
+  delay: 2
+  changed_when: false

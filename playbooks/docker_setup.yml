@@ -1,8 +1,14 @@
 ---
-- name: Set up Docker and deploy NGINX container
+- name: Configure Docker and deploy NGINX container
   hosts: AppServVM
   become: true
   gather_facts: true
-  roles:
-    - docker_setup
+  
+  vars:
+    docker_container_port: 8080
+    docker_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
 
+  tasks:
+    - name: Include Docker setup role
+      include_role:
+        name: docker_setup
