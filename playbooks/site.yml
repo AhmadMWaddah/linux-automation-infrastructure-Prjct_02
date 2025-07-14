@@ -2,6 +2,9 @@
 - name: Configure AppServVM
   hosts: AppServVM
   become: true
+  vars:
+    docker_container_port: 8080
+    docker_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   roles:
     - docker_setup
 
@@ -17,3 +20,23 @@
   roles:
     - db_hardening
 
+- name: Install PostgreSQL on DataBaseServVM
+  hosts: DataBaseServVM
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Install PostgreSQL server package
+      dnf:
+        name: postgresql-server
+        state: present
+
+    - name: Initialize PostgreSQL database
+      command: /usr/bin/postgresql-setup --initdb
+      args:
+        creates: /var/lib/pgsql/data/PG_VERSION
+
+    - name: Enable and start PostgreSQL service
+      systemd:
+        name: postgresql
+        enabled: true
+        state: started

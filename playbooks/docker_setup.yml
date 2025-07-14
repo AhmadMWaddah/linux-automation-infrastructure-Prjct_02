@@ -8,7 +8,5 @@
     docker_container_port: 8080
     docker_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
 
-  tasks:
-    - name: Include Docker setup role
-      include_role:
-        name: docker_setup
+  roles:
+    - docker_setup

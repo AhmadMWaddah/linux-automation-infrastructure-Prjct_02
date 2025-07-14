@@ -1,53 +1,86 @@
 ---
+- name: Install psycopg2 dependency
+  become: true
+  ansible.builtin.dnf:
+    name: python3-psycopg2
+    state: present
+
 - name: Ensure PostgreSQL is installed
-  dnf:
+  become: true
+  ansible.builtin.dnf:
     name: postgresql-server
     state: present
-  become: true
 
-- name: Initialize PostgreSQL
-  command: /usr/bin/postgresql-setup --initdb
+- name: Initialize PostgreSQL database (if not already initialized)
+  become: true
+  ansible.builtin.command: postgresql-setup --initdb
   args:
     creates: /var/lib/pgsql/data/PG_VERSION
-  become: true
 
 - name: Ensure PostgreSQL is enabled and started
-  systemd:
-    name: postgresql
-    enabled: true
-    state: started
   become: true
+  ansible.builtin.systemd:
+    name: postgresql
+    state: started
+    enabled: true
+
+# Use postgresql_query with peer authentication to set initial password
+- name: Set postgres admin password using peer authentication
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_query:
+    db: postgres
+    query: "ALTER USER postgres PASSWORD '{{ postgres_admin_password }}'"
+    login_user: postgres
+    login_unix_socket: /var/run/postgresql
 
 - name: Harden pg_hba.conf to local access only
-  template:
-    src: pg_hba.conf.j2
-    dest: /var/lib/pgsql/data/pg_hba.conf
-    owner: postgres
-    group: postgres
-    mode: '0600'
   become: true
-  notify: Restart PostgreSQL
+  ansible.builtin.lineinfile:
+    path: /var/lib/pgsql/data/pg_hba.conf
+    regexp: '^local\s+all\s+all\s+'
+    line: 'local   all             all                                     md5'
 
 - name: Enable logging in postgresql.conf
-  lineinfile:
+  become: true
+  ansible.builtin.lineinfile:
     path: /var/lib/pgsql/data/postgresql.conf
-    regexp: '^#?(log_destination|logging_collector|log_directory|log_filename|log_statement|log_min_duration_statement)'
-    line: "{{ item }}"
-    state: present
+    regexp: "{{ item.regex }}"
+    line: "{{ item.line }}"
   loop:
-    - "log_destination = 'stderr'"
-    - "logging_collector = on"
-    - "log_directory = 'log'"
-    - "log_filename = 'postgresql-%a.log'"
-    - "log_statement = 'all'"
-    - "log_min_duration_statement = 500"
-  become: true
-  notify: Restart PostgreSQL
+    - { regex: '^#?log_destination', line: "log_destination = 'stderr'" }
+    - { regex: '^#?logging_collector', line: "logging_collector = on" }
+    - { regex: '^#?log_directory', line: "log_directory = 'log'" }
+    - { regex: '^#?log_filename', line: "log_filename = 'postgresql-%a.log'" }
+    - { regex: '^#?log_statement', line: "log_statement = 'all'" }
+    - { regex: '^#?log_min_duration_statement', line: "log_min_duration_statement = 500" }
 
-- name: Create PostgreSQL user with secure password
+- name: Restart PostgreSQL after configuration changes
   become: true
-  postgresql_user:
-    name: app_user
-    password: "{{ db_password }}"
+  ansible.builtin.systemd:
+    name: postgresql
+    state: restarted
+
+- name: Create application database
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_db:
+    name: "{{ app_db_name }}"
+    encoding: UTF8
+    lc_collate: en_US.UTF-8
+    lc_ctype: en_US.UTF-8
     state: present
+    login_user: postgres
+    login_password: "{{ postgres_admin_password }}"
 
+- name: Create application user with secure password and privileges
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_user:
+    name: "{{ app_db_user }}"
+    password: "{{ app_db_password }}"
+    db: "{{ app_db_name }}"
+    privs: "ALL"
+    state: present
+    login_user: postgres
+    login_password: "{{ postgres_admin_password }}"

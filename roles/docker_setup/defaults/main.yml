@@ -1,2 +1,4 @@
 ---
 # defaults file for roles/docker_setup
+docker_container_port: 8080
+docker_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
