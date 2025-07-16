@@ -1,20 +1,29 @@
 ---
-- name: Configure AppServVM
+- name: Configure AppServVM with Docker and NGINX
   hosts: AppServVM
   become: true
   vars:
     docker_container_port: 8080
-    docker_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
+    docker_user: "{{ ansible_user }}"
   roles:
     - docker_setup
 
-- name: Configure WebServVM
+- name: Configure WebServVM with Docker and NGINX
+  hosts: WebServVM
+  become: true
+  vars:
+    docker_container_port: 80  # Use standard HTTP port for reverse proxy
+    docker_user: "{{ ansible_user }}"
+  roles:
+    - docker_setup
+
+- name: Configure WebServVM Reverse Proxy
   hosts: WebServVM
   become: true
   roles:
     - reverse_proxy
 
-- name: Configure DataBaseServVM
+- name: Configure DataBaseServVM Hardening
   hosts: DataBaseServVM
   become: true
   roles:

@@ -1,32 +1,27 @@
 ---
 - name: Install NGINX
-  dnf:
+  package:
     name: nginx
     state: present
 
-- name: Copy custom NGINX config
+- name: Configure reverse proxy
   template:
     src: nginx.conf.j2
     dest: /etc/nginx/nginx.conf
-  notify: Restart nginx
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload NGINX
 
-- name: Start and enable NGINX
+- name: Ensure NGINX is running
   systemd:
     name: nginx
     state: started
-    enabled: true
+    enabled: yes
 
-- name: Allow HTTP traffic through firewall
+- name: Open firewall ports
   firewalld:
     service: http
-    permanent: true
+    permanent: yes
     state: enabled
-    immediate: true
-
-- name: Open HTTP port in firewall
-  become: true
-  firewalld:
-    service: http
-    permanent: true
-    state: enabled
-    immediate: true
+    immediate: yes

@@ -42,11 +42,11 @@
 - name: Add user to docker group
   become: true
   user:
-    name: "{{ docker_user | default(ansible_user) }}"
+    name: "{{ docker_user }}"
     groups: docker
     append: yes
 
-- name: Refresh group membership without hanging
+- name: Refresh group membership
   become: true
   command: sg docker -c "exit"
   changed_when: false
@@ -76,7 +76,7 @@
   become: true
   command: >
     docker run -d --name nginx
-    -p {{ docker_container_port | default('8080') }}:80
+    -p {{ docker_container_port }}:80
     --restart unless-stopped
     nginx:latest
   register: container_deploy
