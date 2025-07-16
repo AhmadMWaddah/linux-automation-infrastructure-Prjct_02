@@ -1,8 +1,7 @@
 ---
 # handlers file for roles/db_hardening
-- name: Restart PostgreSQL
+- name: restart postgresql
   systemd:
     name: postgresql
     state: restarted
-  become: true
-
+  become: yes

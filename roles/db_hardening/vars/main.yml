@@ -1,2 +1,6 @@
 ---
 # vars file for roles/db_hardening
+postgres_admin_password: "123456789"
+app_database_name: "DataBaseServVM_DB"
+app_database_user: "DataBaseServVM_DB_User"
+app_database_password: "123456"

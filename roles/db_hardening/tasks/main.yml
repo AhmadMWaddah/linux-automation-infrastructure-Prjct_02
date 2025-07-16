@@ -1,86 +1,83 @@
 ---
-- name: Install psycopg2 dependency
-  become: true
-  ansible.builtin.dnf:
-    name: python3-psycopg2
+- name: Install PostgreSQL and psycopg2
+  package:
+    name:
+      - postgresql-server
+      - postgresql-contrib
+      - python3-psycopg2
     state: present
+  become: yes
 
-- name: Ensure PostgreSQL is installed
-  become: true
-  ansible.builtin.dnf:
-    name: postgresql-server
-    state: present
+- name: Initialize PostgreSQL (if needed)
+  stat:
+    path: /var/lib/pgsql/data/PG_VERSION
+  register: postgres_data
 
-- name: Initialize PostgreSQL database (if not already initialized)
-  become: true
-  ansible.builtin.command: postgresql-setup --initdb
-  args:
-    creates: /var/lib/pgsql/data/PG_VERSION
+- name: Init DB if first time
+  command: postgresql-setup --initdb --unit postgresql
+  when: not postgres_data.stat.exists
+  become: yes
 
-- name: Ensure PostgreSQL is enabled and started
-  become: true
-  ansible.builtin.systemd:
+- name: Start and enable PostgreSQL
+  systemd:
     name: postgresql
     state: started
-    enabled: true
+    enabled: yes
+  become: yes
 
-# Use postgresql_query with peer authentication to set initial password
-- name: Set postgres admin password using peer authentication
-  become: true
+- name: Set postgres password
+  become: yes
   become_user: postgres
-  community.postgresql.postgresql_query:
-    db: postgres
-    query: "ALTER USER postgres PASSWORD '{{ postgres_admin_password }}'"
-    login_user: postgres
-    login_unix_socket: /var/run/postgresql
+  shell: |
+    psql -c "ALTER USER postgres WITH PASSWORD '{{ postgres_admin_password }}';"
+  no_log: true
 
-- name: Harden pg_hba.conf to local access only
-  become: true
-  ansible.builtin.lineinfile:
-    path: /var/lib/pgsql/data/pg_hba.conf
-    regexp: '^local\s+all\s+all\s+'
-    line: 'local   all             all                                     md5'
-
-- name: Enable logging in postgresql.conf
-  become: true
-  ansible.builtin.lineinfile:
-    path: /var/lib/pgsql/data/postgresql.conf
-    regexp: "{{ item.regex }}"
-    line: "{{ item.line }}"
-  loop:
-    - { regex: '^#?log_destination', line: "log_destination = 'stderr'" }
-    - { regex: '^#?logging_collector', line: "logging_collector = on" }
-    - { regex: '^#?log_directory', line: "log_directory = 'log'" }
-    - { regex: '^#?log_filename', line: "log_filename = 'postgresql-%a.log'" }
-    - { regex: '^#?log_statement', line: "log_statement = 'all'" }
-    - { regex: '^#?log_min_duration_statement', line: "log_min_duration_statement = 500" }
-
-- name: Restart PostgreSQL after configuration changes
-  become: true
-  ansible.builtin.systemd:
-    name: postgresql
-    state: restarted
-
-- name: Create application database
-  become: true
+- name: Create Application DB
+  become: yes
   become_user: postgres
-  community.postgresql.postgresql_db:
-    name: "{{ app_db_name }}"
+  postgresql_db:
+    name: "{{ app_database_name }}"
     encoding: UTF8
-    lc_collate: en_US.UTF-8
-    lc_ctype: en_US.UTF-8
     state: present
-    login_user: postgres
-    login_password: "{{ postgres_admin_password }}"
 
-- name: Create application user with secure password and privileges
-  become: true
+- name: Create Application User
+  become: yes
   become_user: postgres
   community.postgresql.postgresql_user:
-    name: "{{ app_db_user }}"
-    password: "{{ app_db_password }}"
-    db: "{{ app_db_name }}"
-    privs: "ALL"
+    name: "{{ app_database_user }}"
+    password: "{{ app_database_password }}"
+    db: "{{ app_database_name }}"
+    role_attr_flags: "LOGIN"
     state: present
-    login_user: postgres
-    login_password: "{{ postgres_admin_password }}"
+
+- name: Grant privileges on application DB to user
+  become: yes
+  become_user: postgres
+  community.postgresql.postgresql_privs:
+    db: "{{ app_database_name }}"
+    type: database
+    privs: ALL
+    objs: "{{ app_database_name }}"
+    roles: "{{ app_database_user }}"
+
+- name: Harden pg_hba.conf
+  lineinfile:
+    path: /var/lib/pgsql/data/pg_hba.conf
+    regexp: '^host\s+all\s+all\s+127\.0\.0\.1/32\s+'
+    line: 'host    all             all             127.0.0.1/32            md5'
+    backup: yes
+  become: yes
+
+- name: Set listen_addresses to localhost
+  lineinfile:
+    path: /var/lib/pgsql/data/postgresql.conf
+    regexp: '^#?listen_addresses'
+    line: "listen_addresses = 'localhost'"
+    backup: yes
+  become: yes
+
+- name: Restart PostgreSQL
+  systemd:
+    name: postgresql
+    state: restarted
+  become: yes
