@@ -1,5 +1,6 @@
-ansible-playbook -i inventories/hosts.ini playbooks/site.yml --vault-password-file .vault_pass.txt
 # Linux Automation Infrastructure Project (Prjct_02)
+---
+![Alt Image]([https://github.com/AhmadMWaddah/enterprise-linux-basics-Prjct_01/blob/master/RedHat%20Linux%20Practice.png](https://github.com/AhmadMWaddah/linux-automation-infrastructure-Prjct_02/blob/master/project-02-promo.png))
 
 Automates Linux VM provisioning and configuration using Ansible, including web, app, and database services, with CI/CD integration.
 
