@@ -22,7 +22,7 @@
         --memory=3072
         --vcpus=1
         --disk path=/home/amw/Office/DevOps/Practice_VMs/AnsibleOneVM.qcow2,format=qcow2
-        --disk path=/home/amw/Office/DevOps/linux-automation-infrastructure-Prjct_02/images/AnsibleOneVMSeed.iso,device=cdrom
+        --disk path=/home/amw/Office/DevOps/ansible-vm-provisioning/images/AnsibleOneVMSeed.iso,device=cdrom
         --os-type=linux
         --os-variant=almalinux9
         --virt-type=kvm
@@ -31,5 +31,5 @@
         --import
         --noautoconsole
       args:
-        creates: /home/amw/Office/DevOps/linux-automation-infrastructure-Prjct_02/AnsibleOneVMxml.xml
+        creates: /home/amw/Office/DevOps/ansible-vm-provisioning/AnsibleOneVMxml.xml
 

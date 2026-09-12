@@ -1,9 +1,8 @@
-# Linux Automation Infrastructure Project (Prjct_02)
+# Ansible VM Provisioning
 
-![Alt Image](https://github.com/AhmadMWaddah/linux-automation-infrastructure-Prjct_02/blob/master/project-02-promo.png)
+![Promo](https://github.com/AhmadMWaddah/ansible-vm-provisioning/blob/master/project-02-promo.png)
 
----
-Automates Linux VM provisioning and configuration using Ansible, including web, app, and database services, with CI/CD integration.
+Automates Linux VM provisioning and configuration with Ansible across web, app, and database tiers, with CI/CD integration.
 
 ## 1. Project Overview
 
@@ -25,8 +24,7 @@ This project automates multi-tier application deployment with the following comp
 │   └── host_vars/             # Host-specific variables
 ├── playbooks/                 # Ansible playbooks
 │   ├── site.yml              # Main configuration playbook
-│   └── provisioning/
-│       └── create-vms.yml    # VM creation playbook
+│   └── create-vms.yml        # VM creation playbook
 └── roles/                     # Ansible Galaxy roles
     ├── db_hardening/         # PostgreSQL hardening
     ├── docker_setup/         # Docker installation & app deployment
@@ -55,7 +53,7 @@ ansible-galaxy collection install community.postgresql community.general
 Create the virtual machines:
 
 ```bash
-ansible-playbook playbooks/provisioning/create-vms.yml
+ansible-playbook playbooks/create-vms.yml
 ```
 
 ### Step 2: Inventory & SSH Configuration
